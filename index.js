@@ -2,12 +2,13 @@ const express = require('express');
 const datastore = require('nedb');
 const database = new datastore('database.db');
 const app = express();
-const port = 3000 || process.env.PORT;
+const port = process.env.PORT || 3000;
 
 //
 database.loadDatabase();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.listen(port, () => console.log(`listing at port ${port}`));
 
