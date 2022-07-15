@@ -83,6 +83,10 @@ function update(body, cb) {
 }
 app.get('/send', (req, res) => {
 	update(req.body, (err, data) => {
+		if (err) {
+			res.json(err);
+			return;
+		}
 		res.json(data);
 	});
 });
