@@ -27,19 +27,24 @@ app.get('/check', (req, res) => {
 		}
 	});
 });
-
+function createUser(username, cb) {
+	database.find({}, (err, data) => {
+		for (let ele of data) if (ele.username == username) return cb('user name exist');
+		database.insert({ username: username });
+		cb(null, 'USERNAME created');
+	});
+}
 app.get('/signup', (req, res) => {
-	database.find(req.body, (err, data) => {
+	if (!req.body.username) {
+		res.status(300).json('wrong input format');
+		return;
+	}
+	createUser(req.body.username, (err, data) => {
 		if (err) {
-			res.status(300).send(err);
+			res.status(300).json('USERNAME EXIST');
 			return;
 		}
-		if (data.length == 0) {
-			database.insert(req.body);
-			res.status(200).json('SUCCESSFULLY CREATED USERNAME');
-		} else {
-			res.status(300).json('CANNOT CREATE USERNAME');
-		}
+		res.json(data);
 	});
 });
 
@@ -51,35 +56,36 @@ function update(body, cb) {
 	sender = body.sender;
 	receiver = body.receiver;
 	message = body.message;
-
+	var sender_id = null,
+		receiver_id = null;
 	database.find({}, (err, data) => {
 		for (let ele of data) {
-			if (ele.username == a) {
-				const id = ele._id;
-				database.update(
-					{ _id: id },
-					{ $push: { chats: { sender: a, receiver: b, message: message } } },
-					{},
-					(err, data) => {
-						console.log(data);
-					}
-				);
-				//db.update({ _id: 'id6' }, { $push: { fruits: { $each: ['banana'], $slice: 2 } } }, {}, function () {
+			if (ele.username == receiver) {
+				receiver_id = ele._id;
+				console.log(ele._id);
 			}
-			if (ele.username == b) {
-				const id = ele._id;
-				database.update(
-					{ _id: id },
-					{ $push: { chats: { sender: a, receiver: b, message: message } } },
-					{},
-					(err, data) => {
-						console.log(data);
-					}
-				);
-			}
+			if (ele.username == sender) sender_id = ele._id;
 		}
+		if (!sender_id || !receiver_id) return cb('sender or reciever is missing from db');
+
+		database.update(
+			{ _id: sender_id },
+			{ $push: { chats: { sender: sender, receiver: receiver, message: message } } },
+			{},
+			(err, data) => {
+				console.log(data);
+			}
+		);
+		database.update(
+			{ _id: receiver_id },
+			{ $push: { chats: { sender: sender, receiver: receiver, message: message } } },
+			{},
+			(err, data) => {
+				console.log(data);
+			}
+		);
+		cb(null, 'sent');
 	});
-	cb(null, 'sent');
 }
 app.get('/send', (req, res) => {
 	update(req.body, (err, data) => {
