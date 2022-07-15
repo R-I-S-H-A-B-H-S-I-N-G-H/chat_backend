@@ -1,16 +1,17 @@
 const express = require('express');
 const datastore = require('nedb');
-const database = new datastore('database.db');
 const app = express();
 const port = process.env.PORT || 3000;
 
 //
-database.loadDatabase();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.listen(port, () => console.log(`listing at port ${port}`));
+
+const database = new datastore('database.db');
+database.loadDatabase();
 
 app.get('/', (req, res) => {
 	res.json('HOME');
