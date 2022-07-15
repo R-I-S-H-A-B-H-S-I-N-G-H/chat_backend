@@ -134,3 +134,12 @@ app.get('/chats', (req, res) => {
 		res.json(data);
 	});
 });
+app.get('/list', (req, res) => {
+	database.find({}, (err, data) => {
+		if (err) {
+			res.json([]);
+			return;
+		}
+		res.json(data);
+	});
+});
