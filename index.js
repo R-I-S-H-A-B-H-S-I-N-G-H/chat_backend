@@ -29,6 +29,10 @@ app.get('/check', (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
+	if(!req.body.username){
+		res..status(300).json("please send the valid username");
+		return;
+	}
 	database.find(req.body, (err, data) => {
 		if (err) {
 			res.status(300).send(err);
