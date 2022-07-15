@@ -1,8 +1,14 @@
 const express = require('express');
 const app = express();
 const datastore = require('nedb');
+const cors = require('cors');
 const port = process.env.PORT || 3000;
 
+app.use(
+	cors({
+		origin: '*',
+	})
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.listen(port, () => console.log(`running server at ${port}`));
@@ -15,7 +21,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/check', (req, res) => {
-	database.find(req.body, (err, data) => {
+	database.find(req.query, (err, data) => {
 		if (err) {
 			res.status(300).send(err);
 			return;
@@ -30,16 +36,16 @@ app.get('/check', (req, res) => {
 function createUser(username, cb) {
 	database.find({}, (err, data) => {
 		for (let ele of data) if (ele.username == username) return cb('user name exist');
-		database.insert({ username: username });
+		database.insert({ username: username, chats: [] });
 		cb(null, 'USERNAME created');
 	});
 }
 app.get('/signup', (req, res) => {
-	if (!req.body.username) {
+	if (!req.query.username) {
 		res.status(300).json('wrong input format');
 		return;
 	}
-	createUser(req.body.username, (err, data) => {
+	createUser(req.query.username, (err, data) => {
 		if (err) {
 			res.status(300).json('USERNAME EXIST');
 			return;
@@ -88,7 +94,7 @@ function update(body, cb) {
 	});
 }
 app.get('/send', (req, res) => {
-	update(req.body, (err, data) => {
+	update(req.query, (err, data) => {
 		if (err) {
 			res.json(err);
 			return;
@@ -103,22 +109,24 @@ function getchats(body, cb) {
 	sender = body.sender;
 	receiver = body.receiver;
 	database.find({ username: receiver }, (err, data) => {
-		if (data.length <= 0) {
+		if (err || !data || data.length <= 0) {
 			return cb({ error: true }, null);
 		}
 		data = data[0].chats;
-		var result = [];
-		for (let ele of data) {
-			if (ele.sender == sender || ele.receiver == sender) {
-				result.push(ele);
-			}
-		}
-		cb(null, result);
+		console.log('data : ', data);
+
+		// var result = [];
+		// for (let ele of data) {
+		// 	if (ele.sender == sender || ele.receiver == sender) {
+		// 		result.push(ele);
+		// 	}
+		// }
+		cb(null, data);
 	});
 }
 
 app.get('/chats', (req, res) => {
-	getchats(req.body, (err, data) => {
+	getchats(req.query, (err, data) => {
 		if (err) {
 			res.json(err);
 			return;
